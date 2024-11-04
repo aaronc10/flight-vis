@@ -28,7 +28,11 @@ let startDate;
 let endDate;
 
 let flashTimer = 0;
-const flashInterval = 100; // Time in milliseconds between flashes
+let flashInterval = 0; // Time until the next flash
+const minFlashInterval = 100; // Minimum interval in milliseconds
+const maxFlashInterval = 1000; // Maximum interval in milliseconds
+
+let fixedCircle;
 
 function preload() {
   data = loadTable('MigData.csv', 'csv', 'header', 
@@ -41,6 +45,9 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   background(255, 100);
   noStroke();
+  
+  // Initialize flash interval
+  flashInterval = random(minFlashInterval, maxFlashInterval);
   
   // Initialize oscillators and envelopes
   for (let i = 0; i < MAX_VOICES; i++) {
@@ -95,16 +102,16 @@ function setup() {
 }
 
 function draw() {
-  // Create a semi-transparent background to allow for fading effects
-  background(0, 0, 0, 90);
+  background(0, 0, 0, 90); // Semi-transparent background
+
+  // Update flash timer
+  flashTimer += deltaTime; // deltaTime gives the time since the last frame
 
   // Check if it's time to flash
-  flashTimer += deltaTime; // deltaTime gives the time since the last frame
   if (flashTimer > flashInterval) {
-    if (random() < 0.1) { // 10% chance to flash
-      background(255); // Flash white
-    }
+    background(255); // Flash white
     flashTimer = 0; // Reset the timer
+    flashInterval = random(minFlashInterval, maxFlashInterval); // Set a new random interval
   }
 
   // Randomize positions at the start of each loop
@@ -191,7 +198,7 @@ class Circle {
     this.x = x;
     this.y = y;
     this.size = size;
-    this.opacity = 205;
+    this.opacity = 3;
     this.growth = 2;
     this.color = random(colorPalette);
     this.playSound();
@@ -235,20 +242,30 @@ class Path {
     this.start = createVector(startX, startY);
     this.end = createVector(endX, endY);
     this.points = this.generatePoints();
-    this.opacity = 50;
+    this.opacity = 120;
     this.color = color || random(colorPalette);
+    this.progress = 0; // Initialize progress
+    this.speed = 0.02; // Speed of drawing the path
   }
 
   display() {
     let [r, g, b] = this.color;
+    strokeWeight(5);
     stroke(r, g, b, this.opacity);
     
-    beginShape();
-    for (let point of this.points) {
-      vertex(point.x, point.y);
+    // Calculate the current point based on progress
+    let currentPoint = p5.Vector.lerp(this.start, this.end, this.progress);
+    
+    // Draw the line from the start to the current point
+    line(this.start.x, this.start.y, currentPoint.x, currentPoint.y);
+    
+    // Increment progress
+    this.progress += this.speed;
+    if (this.progress > 1) {
+      this.progress = 1; // Cap progress at 1
     }
-    endShape();
-    this.opacity -= 2;
+    
+    this.opacity -= 2.5; // Fade out the path
   }
 
   generatePoints() {
@@ -258,25 +275,13 @@ class Path {
     while (p5.Vector.dist(current, target) > 5) {
       let direction = p5.Vector.sub(target, current);
       direction.normalize();
-      direction.rotate(random(-PI/8, PI/8));
+      direction.rotate(random(-PI / 8, PI / 8));
       direction.mult(random(20));
       current.add(direction);
       points.push(current.copy());
     }
     points.push(this.end);
     return points;
-  }
-
-  display() {
-    stroke(this.color, 50);
-    noFill();
-    beginShape();
-    for (let point of this.points) {
-      vertex(point.x, point.y);
-    }
-    endShape();
-    this.opacity -= 1;
-    
   }
 
   isDead() {
