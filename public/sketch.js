@@ -27,6 +27,9 @@ const colorPalette = [
 let startDate;
 let endDate;
 
+let flashTimer = 0;
+const flashInterval = 100; // Time in milliseconds between flashes
+
 function preload() {
   data = loadTable('MigData.csv', 'csv', 'header', 
     () => console.log('Data loaded successfully'), 
@@ -92,7 +95,17 @@ function setup() {
 }
 
 function draw() {
+  // Create a semi-transparent background to allow for fading effects
   background(0, 0, 0, 90);
+
+  // Check if it's time to flash
+  flashTimer += deltaTime; // deltaTime gives the time since the last frame
+  if (flashTimer > flashInterval) {
+    if (random() < 0.1) { // 10% chance to flash
+      background(255); // Flash white
+    }
+    flashTimer = 0; // Reset the timer
+  }
 
   // Randomize positions at the start of each loop
   if (currentDate.getTime() === startDate.getTime()) {
@@ -107,7 +120,7 @@ function draw() {
       let count = countries[country][dateString];
       let x = countries[country].x;
       let y = countries[country].y;
-      let size = map(count*2, 0, 1000, 100, 200);
+      let size = map(count * 2, 0, 1000, 100, 200);
       
       circles.push(new Circle(x, y, size));
       activeCenters.push(createVector(x, y));
@@ -125,7 +138,7 @@ function draw() {
           startCircle.y, 
           endCircle.x, 
           endCircle.y,
-          startCircle.color  // Pass the color from the source circle
+          startCircle.color
         ));
       }
     }
