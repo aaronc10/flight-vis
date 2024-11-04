@@ -178,7 +178,7 @@ function draw() {
   
   // Display current date
   fill(255);
-  textSize(24);
+  textSize(8);
   text(dateString, 10, 30);
 }
 
