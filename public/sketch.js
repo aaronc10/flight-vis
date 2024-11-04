@@ -250,7 +250,7 @@ class Path {
 
   display() {
     let [r, g, b] = this.color;
-    strokeWeight(5);
+    strokeWeight(2);
     stroke(r, g, b, this.opacity);
     
     // Calculate the current point based on progress
