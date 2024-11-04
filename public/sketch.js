@@ -14,6 +14,16 @@ const bMinorScale = [
   987.77, 1108.73, 1174.66, 1318.51, 1479.98, 1567.98, 1760.00  // B5 to A6
 ];
 
+const colorPalette = [
+  [0, 100, 255],    // blue
+  [135, 206, 235],  // light blue
+  [75, 0, 130],     // indigo
+  [255, 255, 0],    // yellow
+  [144, 238, 144],  // light green
+  [255, 192, 203]   // pink
+];
+
+
 let startDate;
 let endDate;
 
@@ -107,10 +117,16 @@ function draw() {
   // Create new paths
   if (activeCenters.length > 1) {
     for (let i = 0; i < 5; i++) {
-      let start = random(activeCenters);
-      let end = random(activeCenters);
-      if (start !== end) {
-        paths.push(new Path(start.x, start.y, end.x, end.y));
+      let startCircle = random(circles);
+      let endCircle = random(circles);
+      if (startCircle !== endCircle) {
+        paths.push(new Path(
+          startCircle.x, 
+          startCircle.y, 
+          endCircle.x, 
+          endCircle.y,
+          startCircle.color  // Pass the color from the source circle
+        ));
       }
     }
   }
@@ -162,20 +178,22 @@ class Circle {
     this.x = x;
     this.y = y;
     this.size = size;
-    this.opacity = 100;
-    this.growth = 50;
+    this.opacity = 205;
+    this.growth = 2;
+    this.color = random(colorPalette);
     this.playSound();
   }
   
   update() {
     this.size += this.growth;
-    this.opacity -= 8;
+    this.opacity -= 18;
   }
   
   display() {
-    
-    stroke(100,200,200, this.opacity);
-    drawingContext.shadowColor = color(255, this.opacity);
+    noFill();
+    let [r, g, b] = this.color;
+    stroke(r, g, b, this.opacity);
+    drawingContext.shadowColor = color(r, g, b, this.opacity);
     drawingContext.shadowBlur = 2000;
     ellipse(this.x, this.y, this.size);
   }
@@ -200,12 +218,24 @@ class Circle {
 }
 
 class Path {
-  constructor(startX, startY, endX, endY) {
-    noFill();
+  constructor(startX, startY, endX, endY, color) {
     this.start = createVector(startX, startY);
     this.end = createVector(endX, endY);
     this.points = this.generatePoints();
     this.opacity = 50;
+    this.color = color || random(colorPalette);
+  }
+
+  display() {
+    let [r, g, b] = this.color;
+    stroke(r, g, b, this.opacity);
+    
+    beginShape();
+    for (let point of this.points) {
+      vertex(point.x, point.y);
+    }
+    endShape();
+    this.opacity -= 2;
   }
 
   generatePoints() {
@@ -225,7 +255,7 @@ class Path {
   }
 
   display() {
-    stroke(100,200,200, this.opacity);
+    stroke(this.color, 50);
     noFill();
     beginShape();
     for (let point of this.points) {
@@ -233,6 +263,7 @@ class Path {
     }
     endShape();
     this.opacity -= 1;
+    
   }
 
   isDead() {
