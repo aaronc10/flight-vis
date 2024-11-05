@@ -15,11 +15,11 @@ const bMinorScale = [
 ];
 
 const colorPalette = [
-  [156, 239, 67],    // green
-  [184, 185, 48],  // light blue
-  [204, 146, 36],  // light blue
-  [226, 103, 21],     // indigo
-  [253, 50, 1],    // yellow
+    [156, 239, 67],    // green
+    [184, 185, 48],  // light blue
+    [204, 146, 36],  // light blue
+    [226, 103, 21],     // indigo
+    [253, 50, 1],    // yellow
 ];
 
 
@@ -27,11 +27,8 @@ let startDate;
 let endDate;
 
 let flashTimer = 0;
-let flashInterval = 0; // Time until the next flash
-const minFlashInterval = 100; // Minimum interval in milliseconds
-const maxFlashInterval = 1200; // Maximum interval in milliseconds
+const flashInterval = 100; // Time in milliseconds between flashes
 
-let fixedCircle;
 
 function preload() {
   data = loadTable('MigData.csv', 'csv', 'header', 
@@ -44,9 +41,6 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   background(255, 100);
   noStroke();
-  
-  // Initialize flash interval
-  flashInterval = random(minFlashInterval, maxFlashInterval);
   
   // Initialize oscillators and envelopes
   for (let i = 0; i < MAX_VOICES; i++) {
@@ -101,16 +95,16 @@ function setup() {
 }
 
 function draw() {
-  background(0, 0, 0, 90); // Semi-transparent background
-
-  // Update flash timer
-  flashTimer += deltaTime; // deltaTime gives the time since the last frame
+  // Create a semi-transparent background to allow for fading effects
+  background(0, 0, 0, 90);
 
   // Check if it's time to flash
+  flashTimer += deltaTime; // deltaTime gives the time since the last frame
   if (flashTimer > flashInterval) {
-    background(255); // Flash white
+    if (random() < 0.1) { // 10% chance to flash
+      background(255); // Flash white
+    }
     flashTimer = 0; // Reset the timer
-    flashInterval = random(minFlashInterval, maxFlashInterval); // Set a new random interval
   }
 
   // Randomize positions at the start of each loop
@@ -177,7 +171,7 @@ function draw() {
   
   // Display current date
   fill(255);
-  textSize(8);
+  textSize(24);
   text(dateString, 10, 30);
 }
 
@@ -197,7 +191,7 @@ class Circle {
     this.x = x;
     this.y = y;
     this.size = size;
-    this.opacity = 3;
+    this.opacity = 5;
     this.growth = 2;
     this.color = random(colorPalette);
     this.playSound();
@@ -205,7 +199,7 @@ class Circle {
   
   update() {
     this.size += this.growth;
-    this.opacity -= 18;
+    this.opacity -= 1;
   }
   
   display() {
@@ -241,17 +235,24 @@ class Path {
     this.start = createVector(startX, startY);
     this.end = createVector(endX, endY);
     this.points = this.generatePoints();
-    this.opacity = 120;
+    this.opacity = 50;
     this.color = color || random(colorPalette);
-    this.progress = 0; // Initialize progress
-    this.speed = 0.02; // Speed of drawing the path
+    this.progress = 0;
+    this.speed = 0.02;
   }
 
   display() {
     let [r, g, b] = this.color;
-    strokeWeight(2);
     stroke(r, g, b, this.opacity);
     
+//     beginShape();
+//     for (let point of this.points) {
+//       vertex(point.x, point.y);
+//     }
+//     endShape();
+//     this.opacity -= 2;
+//   }
+
     // Calculate the current point based on progress
     let currentPoint = p5.Vector.lerp(this.start, this.end, this.progress);
     
@@ -261,7 +262,7 @@ class Path {
     // Increment progress
     this.progress += this.speed;
     if (this.progress > 1) {
-      this.progress = 1; // Cap progress at 1
+      this.progress = 10; // Cap progress at 1
     }
     
     this.opacity -= 2.5; // Fade out the path
@@ -274,7 +275,7 @@ class Path {
     while (p5.Vector.dist(current, target) > 5) {
       let direction = p5.Vector.sub(target, current);
       direction.normalize();
-      direction.rotate(random(-PI / 8, PI / 8));
+      direction.rotate(random(-PI/8, PI/8));
       direction.mult(random(20));
       current.add(direction);
       points.push(current.copy());
@@ -283,8 +284,37 @@ class Path {
     return points;
   }
 
+  display() {
+
+        // Calculate the current point based on progress
+    let currentPoint = p5.Vector.lerp(this.start, this.end, this.progress);
+    
+    // Draw the line from the start to the current point
+    line(this.start.x, this.start.y, currentPoint.x, currentPoint.y)*noise(this.progress);
+    
+    // Increment progress
+    this.progress += this.speed;
+    if (this.progress > 1) {
+      this.progress = 0.2; // Cap progress at 1
+    }
+    
+    this.opacity -= 2.5 * this.speed; // Fade out the path
+
+    stroke(this.color, 12);
+    noFill();
+    beginShape();
+    for (let point of this.points) {
+      vertex(point.x, point.y);
+    }
+    endShape();
+    this.opacity -= 2;
+
+
+    
+  }
+
   isDead() {
-    return this.opacity <= 0;
+    return this.opacity <= 20;
   }
 }
 
